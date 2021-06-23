@@ -44,7 +44,10 @@ public sealed class ExplorerPlayer : MonoBehaviour
 
 	private void Start()
 	{
-		transform.position = GameManager.instance.transitionMapPosition.GetValueOrDefault(transform.position);
+		if(GameManager.instance.transitionMapPosition != null)
+		{
+			transform.position = new Vector3(GameManager.instance.transitionMapPosition.Value.x, GameManager.instance.transitionMapPosition.Value.y, transform.position.z);
+		}
 		movePoint = transform.position;
 	}
 
@@ -100,7 +103,6 @@ public sealed class ExplorerPlayer : MonoBehaviour
 			spriteRenderer.sprite = frameArray[currentFrame];
 		}
 	}
-
 	public Vector3 GetMovePoint()
 	{
 		return movePoint;

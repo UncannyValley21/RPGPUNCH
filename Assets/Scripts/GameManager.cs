@@ -1,19 +1,27 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 public class GameManager : MonoBehaviour
 {
 	string lastMapScene;
-	public Vector2? transitionMapPosition;
-
+	public Vector2? transitionMapPosition = null;
 	static public GameManager instance;
+	public CharacterData playerData;
 
 	private void Awake()
 	{
 		if(instance == null)
 		{
 			instance = this;
+			playerData.name = "";
 			DontDestroyOnLoad(this);
+
+			playerData.maxHealth = 100;
+			playerData.currentHealth = 100;
+			playerData.attackDamage = 3;
+			playerData.maxSpecial = 100;
+			playerData.currentSpecial = 0;	
 		}
 		else
 		{
@@ -48,9 +56,13 @@ public class GameManager : MonoBehaviour
 		SceneManager.LoadScene(lastMapScene);
 	}
 
+	public void GiveExperience(int experience)
+	{
+		playerData.experience += experience;
+	}
+
 	public void GameOver()
 	{
 		SceneManager.LoadScene(0);
 	}
-
 }

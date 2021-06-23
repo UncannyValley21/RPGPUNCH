@@ -1,32 +1,29 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class CombatEntity : MonoBehaviour
 {
 	[SerializeField] private Sprite[] frameArray;
 	[SerializeField] private SpriteRenderer spriteRenderer;
 
-	private int health = 100;
-	private int attackDamage = 5;
-	private string locName = "Player";
+	CharacterData characterData;
 
 	public Vector3 startPos;
 	public unitState entityState;
-	public int Health { get { return health; } }
-	public int AttackDamage { get { return attackDamage; } }
-	public string LocName { get { return locName; } }
 
+	public CharacterData CharacterData { get { return characterData; } }
 
-	public void Setup(EnemyInstanceObject enemyInstance)
+	public void Setup(CharacterData in_characterData, Sprite[] in_Sprites = null)
 	{
-		frameArray = new Sprite[] { enemyInstance.idleSprite, enemyInstance.attackSprite };
-		health = enemyInstance.health;
-		locName = enemyInstance.locName;
-	}
+		characterData = in_characterData;
 
-	private void Awake()
-	{
+		if(in_Sprites != null)
+		{
+			frameArray = in_Sprites;			
+		}
+
 		ChangeFrame(0);
 		startPos = transform.position;
 		entityState = unitState.Idle;
@@ -37,12 +34,18 @@ public class CombatEntity : MonoBehaviour
 		spriteRenderer.sprite = frameArray[index];
 	}
 
-	public void DoDamage(int dmg)
+	public void IncommingDamage(int in_dmg)
 	{
-		health -= dmg;
-		Mathf.Clamp(Health, 0, 100);
-		//StartCoroutine(Shake());
+		characterData.currentHealth -= in_dmg;
+		characterData.currentHealth = Mathf.Clamp(characterData.currentHealth, 0, characterData.maxHealth);
+
 		StartCoroutine(FlashDamage());
+	}
+
+	public void ModifySpecial(int in_value)
+	{
+		characterData.currentSpecial += in_value;
+		characterData.currentSpecial = Mathf.Clamp(characterData.currentSpecial, 0, characterData.maxSpecial);
 	}
 
 	public void setColor(Color in_color)

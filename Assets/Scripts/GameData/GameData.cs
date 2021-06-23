@@ -1,5 +1,3 @@
-
-
 public static class GameData
 {
 	public const float transitionLoadTime = 0.1f;
@@ -11,7 +9,5 @@ public static class GameData
 	"TreeThug",
 	"GrassHound",
 	"Lepakko",
-	};
-
-	
+	};	
 }

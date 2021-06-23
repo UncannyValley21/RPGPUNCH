@@ -12,7 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19d6980e7d71a2e40a11dcfb8cb1d864, type: 3}
   m_Name: TreeThug
   m_EditorClassIdentifier: 
-  locName: Tree Thug
-  health: 100
   idleSprite: {fileID: 21300000, guid: eeb76dc652e57654bbe0b7cf25d5abdd, type: 3}
   attackSprite: {fileID: 21300000, guid: eeb76dc652e57654bbe0b7cf25d5abdd, type: 3}
+  enemyData:
+    name: TreeThug
+    maxHealth: 100
+    currentHealth: 100
+    maxSpecial: 100
+    currentSpecial: 0
+    attackDamage: 20
+    experience: 100
+    gemSlots: 0

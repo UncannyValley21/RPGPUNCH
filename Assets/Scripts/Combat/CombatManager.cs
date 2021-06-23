@@ -10,25 +10,26 @@ public sealed class CombatManager : MonoBehaviour
 	[SerializeField] private CombatEntity enemy;
 	[SerializeField] private CombatEntity player;
 	[SerializeField] private Text enemyName;
-	[SerializeField] private Text enemyHealthText;
-	[SerializeField] private Text playerHealthText;
-	[SerializeField] private Text comboText;
+	[SerializeField] private UIMeter enemyHealth;
+	[SerializeField] private UIMeter playerHealth;
+	[SerializeField] private UIMeter playerSpecialMeter;
 	[SerializeField] private SpriteRenderer[] threatSquare;
 
-	int combo = 1;
 	float enemyTurnTimer;
 	LayerMask dodgeLayer = 1;
 
-	private void Awake()
+	private void Start()
 	{
-		enemy.Setup(Resources.Load<EnemyInstanceObject>(GameData.enemyList[UnityEngine.Random.Range(0, GameData.enemyList.Length)]));
-		enemyName.text = enemy.LocName;
+		EnemyInstanceObject EnemyInstance = Resources.Load<EnemyInstanceObject>(GameData.enemyList[UnityEngine.Random.Range(0, GameData.enemyList.Length)]);
+		enemy.Setup(EnemyInstance.enemyData, new Sprite[] { EnemyInstance.idleSprite, EnemyInstance.attackSprite });
+		player.Setup(GameManager.instance.playerData);
 	}
 
 	private void Update()
-	{	
+	{
 		//Player
-		playerHealthText.text = player.Health.ToString();
+		playerHealth.UpdateMeter(player.CharacterData.currentHealth, player.CharacterData.maxHealth);
+		playerSpecialMeter.UpdateMeter(player.CharacterData.currentSpecial, player.CharacterData.maxSpecial);
 
 		//Enenmy
 		enemyTurnTimer += Time.deltaTime * UnityEngine.Random.Range(1f, 10.0f);
@@ -36,7 +37,6 @@ public sealed class CombatManager : MonoBehaviour
 		if(enemy.entityState == unitState.Idle && enemyTurnTimer > 10.0f)
 		{
 			enemyTurnTimer = 0;
-
 			int attack = UnityEngine.Random.Range(0, 5);
 
 			if(attack == 0)
@@ -63,18 +63,17 @@ public sealed class CombatManager : MonoBehaviour
 			{
 				StartCoroutine(EnemyAttack(5, 0.20f, 13));
 			}
-
-
-
 		}
 
-		enemyHealthText.text = enemy.Health.ToString();
+		enemyHealth.UpdateMeter(enemy.CharacterData.currentHealth, enemy.CharacterData.maxHealth);
 
-		if(enemy.Health <= 0)
+		if(enemy.CharacterData.currentHealth <= 0)
 		{
+			GameManager.instance.GiveExperience(enemy.CharacterData.experience);
+			GameManager.instance.playerData.currentSpecial = player.CharacterData.currentSpecial;
 			GameManager.instance.ReturnToLastMapScene();
 		}
-		else if (player.Health <= 0)
+		else if (player.CharacterData.currentHealth <= 0)
 		{
 			GameManager.instance.GameOver();
 		}
@@ -90,7 +89,7 @@ public sealed class CombatManager : MonoBehaviour
 
 	public void OnSpecialInput(InputAction.CallbackContext context)
 	{
-		if(player.entityState == unitState.Idle && dodgeLayer == 1 && context.started)
+		if(player.entityState == unitState.Idle && dodgeLayer == 1 && context.started && player.CharacterData.currentSpecial > 50)
 		{
 			StartCoroutine(HeavyAttack(2, 0.3f));
 		}
@@ -134,16 +133,15 @@ public sealed class CombatManager : MonoBehaviour
 
 			if(attackTimer >= actionTime)
 			{
-				enemy.DoDamage(damage);
-				ModifyCombatMultiplier(combo +1);
+				enemy.IncommingDamage(damage);
+				player.ModifySpecial(damage);
+				//ModifyCombatMultiplier(player.CharacterData.currentSpecialMeter +1);
 				player.entityState = unitState.Idle;
 			}
-
 		}
 		player.entityState = unitState.Idle;
 		player.ChangeFrame(0);
-		player.transform.position = player.startPos;
-		
+		player.transform.position = player.startPos;		
 	}
 
 	private IEnumerator HeavyAttack(int damage, float actionTime)
@@ -162,7 +160,8 @@ public sealed class CombatManager : MonoBehaviour
 
 			if(attackTimer >= actionTime)
 			{
-				enemy.DoDamage(damage*combo);
+				enemy.IncommingDamage(damage*10);
+				player.ModifySpecial(-50);
 				player.entityState = unitState.Idle;
 			}
 		}
@@ -181,8 +180,8 @@ public sealed class CombatManager : MonoBehaviour
 		enemy.transform.position += new Vector3(0, -2);
 		if((dodgeLayer & attackArea) > 0)
 		{
-			player.DoDamage(damage);
-			ModifyCombatMultiplier(1);
+			player.IncommingDamage(damage);
+			player.ModifySpecial(-damage);
 		}
 		yield return new WaitForSeconds(0.1f);
 		enemy.transform.position = enemy.startPos;
@@ -190,25 +189,8 @@ public sealed class CombatManager : MonoBehaviour
 		enemy.entityState = unitState.Idle;
 	}
 
-	private void ModifyCombatMultiplier(int newCombo)
-	{
-		combo = newCombo;
-
-		if(combo > 1)
-		{
-			comboText.text = "Combo: x " + combo.ToString();
-		}
-		else
-		{
-			comboText.text = "";
-		}
-	}
-
 	private IEnumerator FlashThreatSquare(float duration, LayerMask attackArea)
 	{
-
-		Debug.Log(attackArea.value);
-
 		if(attackArea == (attackArea | (1 << 0)))
 		{
 			threatSquare[0].gameObject.SetActive(true);
